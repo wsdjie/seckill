@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+	xmlns:layout="http://www.ultrag.net.nz/thymeleaf/layout">
+<head>
+<meta charset="UTF-8">
+<title>注册</title>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
+</head>
+<body>
+	<div class="container" style="text-align: center; margin-top: 50px;">
+		<div class="row col-md-6 col-md-offset-3">
+			<div class="panel panel-default">
+				<div class="panel-heading" th:text="${title}">注册页面</div>
+				<div class="panel-body">
+					<form id="registerForm" th:action="@{/register}"
+						th:object="${user}" method="post">
+						<div class="input-group">
+							<span class="input-group-addon">username</span>
+							<!-- <input  id="username" type="text" name="username" class="form-control" placeholder="用户名"> -->
+							<input id="username" type="text" th:field="*{username}"
+								class="form-control" placeholder=" 用户名 ">
+						</div>
+						<div>
+							<span th:if="${#fields.hasErrors('username')}" 
+								th:errors="*{username}" style="color: red;"></span><!-- 后端验证不符合条件后执行提示 -->
+						</div>
+						<br>
+						<div class="input-group">
+							<span class="input-group-addon">password</span>
+							<!-- <input id="password" type="password" name="password" class="formcontrol" placeholder="密码"> -->
+							<!-- <input id="password" type="password" th:field="*{password}" class="formcontrol" placeholder="密码" >-->
+							<input id="password" type="password" name="password"
+								class="form-control" placeholder=" 密码 " required> <!-- required 前端验证，为必须项 -->
+						</div>
+						<div>
+							<span th:if="${#fields.hasErrors('password')}"
+								th:errors="*{password}" style="color: red;"></span>
+						</div>
+						<br>
+						<div class="input-group">
+							<span class="input-group-addon">re-password</span>
+							<!-- <input id="repassword" type="password" name="repassword" class="formcontrol" placeholder="确认密码"> -->
+							<input id="repassword" type="password" th:field="*{repassword}"
+								class="form-control" placeholder=" 确认密码 " required>
+						</div>
+						<br>
+						<button type="submit" class="btn btn-primary register-btn">注册</button>
+						<button type="reset" class="btn btn-warning">重置</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script th:src="@{/js/jquery-3.1.1.js}"></script>
+<script th:src="@{/js/jquery.validate.min.js}"></script>
+<script th:src="@{/js/messages_zh.min.js}"></script>
+<script th:src="@{/js/additional-methods.min.js}"></script>
+<script th:src="@{/js/MD5.js}"></script>
+<script type="text/javascript">
+	$("#registerForm").validate({ //前端验证之后再后端验证
+		rules : {
+			password : {
+				required : true,
+				minlength : 4,
+				maxlength : 6,
+			},
+			repassword : {
+				equalTo : "#password"
+			}
+		},
+		  messages: {
+			  password:{
+				  required:"请输入密码",
+				  minlength:"密码长度应在4到6之间",
+				  maxlength:"密码长度应在4到6之间"
+			  },
+			  repassword:"密码不一致"
+		  },
+		submitHandler: function(form) { //提交表单操作成功后
+		debugger//使用前端的debug
+		var salt = "djspringboot" //定义盐
+		var newpassword = $.md5($("#password").val()+salt) //.md5（）为使用盐的方法，JS文件为MD5.js
+		 $("#password").val(newpassword);
+		form.submit();
+		}
+	});
+</script>
+</html>
