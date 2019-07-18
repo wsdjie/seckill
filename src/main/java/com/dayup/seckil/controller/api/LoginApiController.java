@@ -17,9 +17,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.dayup.seckil.VO.userVO;
+import com.dayup.seckil.base.controller.BaseApiController;
+import com.dayup.seckil.base.result.Result;
+import com.dayup.seckil.base.result.ResultCode;
 import com.dayup.seckil.model.User;
 import com.dayup.seckil.service.UserService;
 import com.dayup.seckil.util.MD5util;
@@ -30,46 +34,20 @@ import antlr.StringUtils;
 import ch.qos.logback.classic.Logger;
 import jdk.internal.org.jline.utils.Log;
 
-@Controller
-public class LoginApiController {
+@RestController
+public class LoginApiController extends BaseApiController{
 
 	private static Logger log = (Logger) LoggerFactory.getLogger(LoginApiController.class);
 
 	@Autowired
 	private UserService userService;
-/**
- * 跳转到登录页面
- * @param model
- * @return
- */
-	@RequestMapping(value = "/login", method = RequestMethod.GET)
-	public String login(Model model) {
-		model.addAttribute("user", new User());
-		model.addAttribute("title", "登录页面");
-		return "login";
-	}
-/**
- * 登录验证
- * @param user
- * @param bindingResult 
- * @param session
- * @param code 用户输入的验证码
- * @param model
- * @param response
- * @return
- */
-	@RequestMapping(value="/login", method=RequestMethod.POST)
-	public String login(@ModelAttribute(value="user") @Valid User user, BindingResult bindingResult,HttpSession session, String code, Model model, HttpServletResponse response){
+	
+	@RequestMapping(value="/login")
+	public Result<Object> login(@ModelAttribute(value="user") @Valid User user, BindingResult bindingResult,HttpSession session, String code, Model model, HttpServletResponse response){
 		log.info("username="+user.getUsername()+";password="+user.getPassword());
-		if(bindingResult.hasErrors()){ //如果有数据校验错误，返回登录的页面
-			return "login";
+		if(bindingResult.hasErrors()){ 
+			return Result.failure(); //500
 		}
-		String sessionCode = (String) session.getAttribute("code");
-		if (!org.thymeleaf.util.StringUtils.equalsIgnoreCase(code, sessionCode)) { //验证码不匹配返回登录页面
-			model.addAttribute("message", "验证码不匹配");
-			return "login";
-		}
-		
 		userVO dbUser = userService.getUser(user.getUsername()); //根据用户名获取数据库中的账号信息
 		
 		if(dbUser != null){
@@ -82,38 +60,14 @@ public class LoginApiController {
 				cookie.setMaxAge(3600);//有限期为1小时
 				cookie.setPath("/");
 				response.addCookie(cookie);//添加Cookie
-				return "redirect:/home"; //重定向到指定的@RequestMapping的请求路径
+				return Result.success(); //200
 			}else{
-				return "login";
+				return  Result.failure(ResultCode.USER_LOGIN_ERROR);
 			}
 		}else{
-			return "login";
+			return  Result.failure(ResultCode.USER_LOGIN_ERROR);
 		}
 		
-	}
-	
-/**
- * 验证码
- * @param request
- * @param response
- * @return
- * @throws IOException
- */
-	@RequestMapping(value = "/validateCode")
-	public String validateCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		// 设置响应类型格式为图片格式
-		response.setContentType("image/jpeg");
-		// 禁止图像缓存
-		response.setHeader("Pragma", "no-cache");
-		response.setHeader("Cache-Control", "no-cache");
-		response.setDateHeader("Expires", 0);
-
-		HttpSession session = request.getSession();
-
-		ValidateCode vCode = new ValidateCode(120, 34, 5, 100);
-		session.setAttribute("code", vCode.getCode());
-		vCode.write(response.getOutputStream());
-		return null;
 	}
 
 }
